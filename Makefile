@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+         #
+#    By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/18 00:36:23 by bgrhnzcn          #+#    #+#              #
-#    Updated: 2024/10/18 01:55:57 by bgrhnzcn         ###   ########.fr        #
+#    Updated: 2024/10/18 21:02:08 by buozcan          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,7 +44,7 @@ GLFW_DIR = $(LIB_DIR)/glfw
 
 GLFW_INC = -I $(GLFW_DIR)/include/GLFW
 
-GLFW_LINK = -L $(GLFW_DIR)/src -lglfw3 -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
+GLFW_LINK = -L $(GLFW_DIR)/src -lglfw -lrt -lm -ldl 
 
 GLFW = $(GLFW_DIR)/src/libglfw3.a
 
@@ -54,14 +54,14 @@ $(GLFW): $(GLFW_DIR)
 $(GLFW_DIR):
 	git clone https://github.com/glfw/glfw.git $(GLFW_DIR)
 
-$(NAME): $(OBJS)
-	$(COMPILER) $(FLAGS) $(GLFW_LINK) $(OBJS) -o $@
+$(NAME): $(GLFW) $(OBJS)
+	$(COMPILER) $(FLAGS) $(OBJS) $(GLFW_LINK) -o $@
 
 clean:
 	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -rf $(NAME)
+	rm -f $(NAME)
 
 re: fclean all
 
