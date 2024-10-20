@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+         #
+#    By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/18 00:36:23 by bgrhnzcn          #+#    #+#              #
-#    Updated: 2024/10/18 21:02:08 by buozcan          ###   ########.fr        #
+#    Updated: 2024/10/20 04:02:34 by bgrhnzcn         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,13 +22,18 @@ SRC_DIR = src
 
 OBJ_DIR = obj
 
-SRCS = $(SRC_DIR)/main/main.cpp
+SRCS =	$(SRC_DIR)/main/main.cpp				\
+		$(SRC_DIR)/renderer/VulkanInstance.cpp	\
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
+INC = $(shell find $(SRC_DIR) -type f -name "*.hpp")
+
+INC_DIR = -I $(shell dirname $(INC))
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(COMPILER) $(FLAGS) $(GLFW_INC) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INC_DIR) $(GLFW_INC) -c $< -o $@
 
 LIB_DIR = libs
 
@@ -44,7 +49,7 @@ GLFW_DIR = $(LIB_DIR)/glfw
 
 GLFW_INC = -I $(GLFW_DIR)/include/GLFW
 
-GLFW_LINK = -L $(GLFW_DIR)/src -lglfw -lrt -lm -ldl 
+GLFW_LINK = -L $(GLFW_DIR)/src -lglfw3 -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
 GLFW = $(GLFW_DIR)/src/libglfw3.a
 
@@ -54,7 +59,7 @@ $(GLFW): $(GLFW_DIR)
 $(GLFW_DIR):
 	git clone https://github.com/glfw/glfw.git $(GLFW_DIR)
 
-$(NAME): $(GLFW) $(OBJS)
+$(NAME): $(GLFW) $(OBJS) $(INC)
 	$(COMPILER) $(FLAGS) $(OBJS) $(GLFW_LINK) -o $@
 
 clean:
