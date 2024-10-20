@@ -6,7 +6,7 @@
 #    By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/18 00:36:23 by bgrhnzcn          #+#    #+#              #
-#    Updated: 2024/10/20 04:02:34 by bgrhnzcn         ###   ########.fr        #
+#    Updated: 2024/10/20 16:44:12 by bgrhnzcn         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ SHELL = /bin/bash
 
 COMPILER = g++
 
-FLAGS = -Wall -Werror -Wextra -std=c++17
+FLAGS = -Wall -Werror -Wextra -std=c++17 #-D NDEBUG
 
 SRC_DIR = src
 
