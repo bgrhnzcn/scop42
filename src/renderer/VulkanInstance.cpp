@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   VulkanInstance.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+        */
+/*   By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 03:45:21 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/21 00:01:09 by bgrhnzcn         ###   ########.fr       */
+/*   Updated: 2024/10/21 17:50:32 by buozcan          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,7 +94,7 @@ void VulkanInstance::CreateDebugMessanger()
 void VulkanInstance::SelectPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(vkInst, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(vkInst, nullptr, nullptr);
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(vkInst, &deviceCount, devices.data());
 	device = devices[0];
