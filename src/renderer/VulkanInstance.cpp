@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   VulkanInstance.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+        */
+/*   By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 03:45:21 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/22 21:05:42 by buozcan          ###   ########.fr       */
+/*   Updated: 2024/10/23 00:47:17 by bgrhnzcn         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,11 @@ VulkanInstance::VulkanInstance()
 	VkApplicationInfo appInfo = InitAppInfo();
 	//Mandatory. We use this data to initialize Vulkan.
 	//Every entry in here used for some important aspect of Vulkan Instance.
-	VkInstanceCreateInfo createInfo = InitCreateInfo(appInfo, extensions, layers);
+	VkInstanceCreateInfo createInfo = InitCreateInfo(appInfo);
 	//Finally create our Vulkan Instance. (Similiar to OpenGL Context)
 	vkCreateInstance(&createInfo, nullptr, &vkInst);
-	//CreateDebugMessanger();
-	//SelectPhysicalDevice();
+	CreateDebugMessanger();
+	SelectPhysicalDevice();
 }
 
 VulkanInstance::~VulkanInstance()
@@ -105,16 +105,13 @@ void VulkanInstance::CreateDebugMessanger()
 void VulkanInstance::SelectPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(vkInst, nullptr, nullptr);
+	vkEnumeratePhysicalDevices(vkInst, &deviceCount, nullptr);
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(vkInst, &deviceCount, devices.data());
 	physicalDevice = devices[0];
 }
 
-VkInstanceCreateInfo VulkanInstance::InitCreateInfo(
-	const VkApplicationInfo &appInfo,
-	std::vector<const char *> &extensions,
-	std::vector<const char *> &layers)
+VkInstanceCreateInfo VulkanInstance::InitCreateInfo(const VkApplicationInfo &appInfo)
 {
 	return VkInstanceCreateInfo
 	{
