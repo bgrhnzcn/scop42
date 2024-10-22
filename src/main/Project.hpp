@@ -1,24 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Project.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/18 00:37:29 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/22 21:08:39 by buozcan          ###   ########.fr       */
+/*   Created: 2024/10/22 20:37:45 by buozcan           #+#    #+#             */
+/*   Updated: 2024/10/22 21:08:43 by buozcan          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#define GLFW_INCLUDE_VULKAN
-#include <glfw3.h>
-#include <iostream>
-#include <vector>
+#ifndef PROJECT_HPP
+# define PROJECT_HPP
 
-#include <Project.hpp>
+# include "VulkanInstance.hpp"
 
-int main()
+class Project
 {
-	Project scop;
-	return (0);
-}
+    private:
+        GLFWwindow *window;
+        VulkanInstance *vulkan;
+    public:
+        void InitWindow();
+        void Run();
+        void Close();
+    public:
+        Project();
+};
+
+#endif //PROJECT_HPP

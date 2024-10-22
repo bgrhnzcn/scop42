@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   VulkanInstance.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+        */
+/*   By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 03:20:58 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/20 22:48:57 by bgrhnzcn         ###   ########.fr       */
+/*   Updated: 2024/10/22 21:08:46 by buozcan          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #	endif
 
 #	define GLFW_INCLUDE_VULKAN
+#	include <vulkan/vulkan.hpp>
 #	include <glfw3.h>
 #	include <iostream>
 #	include <vector>
@@ -30,16 +31,20 @@ class VulkanInstance
 		VulkanInstance();
 		~VulkanInstance();
 	private:
+		std::vector<const char *> extensions;
+		std::vector<const char *> layers;
 		VkInstance vkInst;
 		VkDebugUtilsMessengerEXT debugMessenger;
-		VkPhysicalDevice device;
+		VkPhysicalDevice physicalDevice;
+		VkDevice logicalDevice;
 	private:
 		VkApplicationInfo InitAppInfo();
+		void CheckExtensions();
+		void CheckValidationLayers();
 		VkInstanceCreateInfo InitCreateInfo(const VkApplicationInfo &appInfo,
 				std::vector<const char *> &extensions,
 				std::vector<const char *> &layers);
-		void GetValidationLayers(uint32_t &layerCountOut,
-				std::vector<VkLayerProperties> &availableLayers,
+		void GetValidationLayers(std::vector<VkLayerProperties> &availableLayers,
 				std::vector<const char *> &layerRequests);
 		VkDebugUtilsMessengerCreateInfoEXT InitDebugMessenger(
 				);

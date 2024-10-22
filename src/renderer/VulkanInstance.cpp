@@ -6,7 +6,7 @@
 /*   By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 03:45:21 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/21 17:50:32 by buozcan          ###   ########.fr       */
+/*   Updated: 2024/10/22 21:05:42 by buozcan          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,34 +14,17 @@
 
 VulkanInstance::VulkanInstance()
 {
-	//Variables to store data about GLFW extensions.
-	uint32_t glfwExtCount = 0;
-	const char **glfwExtNames = nullptr;
-	//We get how many extansion used by glfw and what is their names.
-	//We will use this data to make Vulkan to load this extansions.
-	glfwExtNames = glfwGetRequiredInstanceExtensions(&glfwExtCount);
-	std::vector<const char *> extensions(glfwExtNames, glfwExtNames + glfwExtCount);
-	extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	for (const char *val : extensions)
-		std::cout << val << std::endl;
+	CheckExtensions();
+	CheckValidationLayers();
 	//Not mandotory, useful to make driver work better.
 	VkApplicationInfo appInfo = InitAppInfo();
-	//Variables to store data about Validation layers.
-	uint32_t layerCount = 0;
-	std::vector<VkLayerProperties> availableLayers;
-	std::vector<const char *> layers;
-	if (enableDebug)
-		//We are adding requested layers.
-		layers.push_back("VK_LAYER_KHRONOS_validation");
-	//Not mandotory. Checks existence of validation layers. If fail program aborts.
-	GetValidationLayers(layerCount, availableLayers, layers);
 	//Mandatory. We use this data to initialize Vulkan.
 	//Every entry in here used for some important aspect of Vulkan Instance.
 	VkInstanceCreateInfo createInfo = InitCreateInfo(appInfo, extensions, layers);
 	//Finally create our Vulkan Instance. (Similiar to OpenGL Context)
 	vkCreateInstance(&createInfo, nullptr, &vkInst);
-	CreateDebugMessanger();
-	SelectPhysicalDevice();
+	//CreateDebugMessanger();
+	//SelectPhysicalDevice();
 }
 
 VulkanInstance::~VulkanInstance()
@@ -61,6 +44,34 @@ VkApplicationInfo VulkanInstance::InitAppInfo()
 		.engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
 		.apiVersion = VK_API_VERSION_1_0,
 	};
+}
+
+void VulkanInstance::CheckExtensions()
+{
+	//Variables to store data about GLFW extensions.
+	uint32_t extCount = 0;
+	const char **glfwExtNames = nullptr;
+	//We get how many extansion used by glfw and what is their names.
+	//We will use this data to make Vulkan to load this extansions.
+	glfwExtNames = glfwGetRequiredInstanceExtensions(&extCount);
+	if (glfwExtNames == nullptr)
+		throw std::runtime_error("Error encountered while getting required extensions.");
+	extensions = std::vector<const char *>(glfwExtNames, glfwExtNames + extCount);
+	extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	std::cout << "Required Extensions: " << extensions.size() << std::endl;
+	for (const char *val : extensions)
+		std::cout << "Extension Name: " << val << std::endl;
+}
+
+void VulkanInstance::CheckValidationLayers()
+{
+	//Variables to store data about Validation layers.
+	std::vector<VkLayerProperties> availableLayers;
+	if (enableDebug)
+		//We are adding requested layers.
+		layers.push_back("VK_LAYER_KHRONOS_validation");
+	//Not mandotory. Checks existence of validation layers. If fail program aborts.
+	GetValidationLayers(availableLayers, layers);
 }
 
 VkDebugUtilsMessengerCreateInfoEXT VulkanInstance::InitDebugMessenger(
@@ -97,7 +108,7 @@ void VulkanInstance::SelectPhysicalDevice()
 	vkEnumeratePhysicalDevices(vkInst, nullptr, nullptr);
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(vkInst, &deviceCount, devices.data());
-	device = devices[0];
+	physicalDevice = devices[0];
 }
 
 VkInstanceCreateInfo VulkanInstance::InitCreateInfo(
@@ -146,13 +157,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugCallback(
 }
 
 void VulkanInstance::GetValidationLayers(
-	uint32_t &layerCountOut,
 	std::vector<VkLayerProperties> &availableLayers,
 	std::vector<const char *> &layerRequests)
 {
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-	layerCountOut = layerCount;
 
 	availableLayers.resize(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
