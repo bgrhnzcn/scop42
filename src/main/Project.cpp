@@ -11,6 +11,11 @@ void Project::InitWindow()
 		throw std::runtime_error("GLFW failed to open window!");
 }
 
+void Project::InitVulkan()
+{
+	vulkan = new VulkanInstance();
+}
+
 void Project::Run()
 {
 	while (glfwWindowShouldClose(window) != GLFW_TRUE)
@@ -29,8 +34,8 @@ void Project::Close()
 
 Project::Project()
 {
-    InitWindow();
-	vulkan = new VulkanInstance();
-    Run();
-    Close();
+	InitWindow();
+	InitVulkan();
+	Run();
+	Close();
 }
