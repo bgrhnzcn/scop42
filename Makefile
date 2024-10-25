@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+         #
+#    By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/18 00:36:23 by bgrhnzcn          #+#    #+#              #
-#    Updated: 2024/10/22 21:04:57 by buozcan          ###   ########.fr        #
+#    Updated: 2024/10/25 17:20:12 by bgrhnzcn         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ SHELL = /bin/bash
 
 COMPILER = g++
 
-FLAGS = -Wall -Werror -Wextra -std=c++17 #-D NDEBUG
+FLAGS = -Wall -Werror -Wextra -std=c++17 -D DEBUG
 
 SRC_DIR = src
 

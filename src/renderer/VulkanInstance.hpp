@@ -6,52 +6,65 @@
 /*   By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 03:20:58 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/23 00:46:56 by bgrhnzcn         ###   ########.fr       */
+/*   Updated: 2024/10/25 18:54:35 by bgrhnzcn         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef VULKAN_INSTANCE_HPP
 #	define VULKAN_INSTANCE_HPP
 
-#	ifndef NDEBUG
-		const static bool enableDebug = false;
+#	ifdef DEBUG
+		const static bool enableValidationLayers = true;
 #	else
-		const static bool enableDebug = true;
+		const static bool enableValidationLayers = false;
 #	endif
 
-#	define GLFW_INCLUDE_VULKAN
+#	define GLFW_INCLUDE_NONE
+#	include <vulkan/vulkan.hpp>
 #	include <glfw3.h>
 #	include <iostream>
 #	include <vector>
+#	include <optional>
 
 class VulkanInstance
 {
+	private:
+		struct QueueFamilyIndices;
 	public:
 		VulkanInstance();
 		~VulkanInstance();
 	private:
-		std::vector<const char *> extensions;
-		std::vector<const char *> layers;
-		VkInstance vkInst;
-		VkDebugUtilsMessengerEXT debugMessenger;
-		VkPhysicalDevice physicalDevice;
-		VkDevice logicalDevice;
+		std::vector<const char *> m_extensions;
+		std::vector<const char *> m_layers;
+		VkInstance m_vkInst;
+		VkDebugUtilsMessengerEXT m_debugMessenger;
+		VkPhysicalDevice m_physicalDevice;
+		VkDevice m_logicalDevice;
 	private:
 		VkApplicationInfo InitAppInfo();
-		void CheckExtensions();
-		void CheckValidationLayers();
 		VkInstanceCreateInfo InitCreateInfo(const VkApplicationInfo &appInfo);
-		void GetValidationLayers(std::vector<VkLayerProperties> &availableLayers,
-				std::vector<const char *> &layerRequests);
 		VkDebugUtilsMessengerCreateInfoEXT InitDebugMessenger();
-		void CreateDebugMessanger();
-		void SelectPhysicalDevice();
+		VkDeviceQueueCreateInfo InitDeviceQueueCreateInfo(QueueFamilyIndices queueFamilyIndices);
+		bool GetRequiredExtensions();
+		bool CheckSupportedValidationLayers();
+		bool CreateDebugMessenger();
+		bool SelectPhysicalDevice();
+		bool IsDeviceSuitable(VkPhysicalDevice &device);
+		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &device);
 	private: //Static Members
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 				VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 				VkDebugUtilsMessageTypeFlagsEXT messageType,
 				const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 				void* pUserData);
+	private:
+		struct QueueFamilyIndices
+		{
+			public:
+				std::optional<uint32_t> graphicsFamily;
+			public:
+				bool IsComplete();
+		};
 };
 
 #endif //VULKAN_INSTANCE_HPP

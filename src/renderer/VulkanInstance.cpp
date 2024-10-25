@@ -6,7 +6,7 @@
 /*   By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 03:45:21 by bgrhnzcn          #+#    #+#             */
-/*   Updated: 2024/10/24 22:40:06 by bgrhnzcn         ###   ########.fr       */
+/*   Updated: 2024/10/25 19:18:37 by bgrhnzcn         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,22 +14,30 @@
 
 VulkanInstance::VulkanInstance()
 {
-	CheckExtensions();
-	CheckValidationLayers();
 	//Not mandotory, useful to make driver work better.
 	VkApplicationInfo appInfo = InitAppInfo();
+	//Get used extensions by our window management API and add debug for later use.
+	//Checks is therre any problem with extensions.
+	if (!GetRequiredExtensions())
+		throw std::runtime_error("Error encountered while getting required extensions.");
+	//Checks validation layers for debug mode. If requested layer can't be find, it throws exception.
+	if (enableValidationLayers && !CheckSupportedValidationLayers())
+		throw std::runtime_error("Some validation layers not supported.");
 	//Mandatory. We use this data to initialize Vulkan.
 	//Every entry in here used for some important aspect of Vulkan Instance.
 	VkInstanceCreateInfo createInfo = InitCreateInfo(appInfo);
 	//Finally create our Vulkan Instance. (Similiar to OpenGL Context)
-	vkCreateInstance(&createInfo, nullptr, &vkInst);
-	CreateDebugMessanger();
-	SelectPhysicalDevice();
+	if (vkCreateInstance(&createInfo, nullptr, &m_vkInst) != VK_SUCCESS)
+		throw std::runtime_error("Can't initialize VkInstance!");
+	if (!CreateDebugMessenger())
+		throw std::runtime_error("Failed to load extension function: vkCreateDebugUtilsMessengerEXT");
+	if (!SelectPhysicalDevice())
+		throw std::runtime_error("No Suitable Device for selection.");
 }
 
 VulkanInstance::~VulkanInstance()
 {
-	vkDestroyInstance(vkInst, nullptr);
+	vkDestroyInstance(m_vkInst, nullptr);
 }
 
 VkApplicationInfo VulkanInstance::InitAppInfo()
@@ -46,7 +54,7 @@ VkApplicationInfo VulkanInstance::InitAppInfo()
 	};
 }
 
-void VulkanInstance::CheckExtensions()
+bool VulkanInstance::GetRequiredExtensions()
 {
 	//Variables to store data about GLFW extensions.
 	uint32_t extCount = 0;
@@ -55,23 +63,43 @@ void VulkanInstance::CheckExtensions()
 	//We will use this data to make Vulkan to load this extansions.
 	glfwExtNames = glfwGetRequiredInstanceExtensions(&extCount);
 	if (glfwExtNames == nullptr)
-		throw std::runtime_error("Error encountered while getting required extensions.");
-	extensions = std::vector<const char *>(glfwExtNames, glfwExtNames + extCount);
-	extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	std::cout << "Required Extensions: " << extensions.size() << std::endl;
-	for (const char *val : extensions)
-		std::cout << "Extension Name: " << val << std::endl;
+		return false;
+	m_extensions = std::vector<const char *>(glfwExtNames, glfwExtNames + extCount);
+	m_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	std::cout << "Required Extensions: " << m_extensions.size() << std::endl;
+	for (const char *val : m_extensions)
+		std::cout << "\tExtension Name: " << val << std::endl;
+	return true;
 }
 
-void VulkanInstance::CheckValidationLayers()
+bool VulkanInstance::CheckSupportedValidationLayers()
 {
+	uint32_t layerCount = 0;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 	//Variables to store data about Validation layers.
-	std::vector<VkLayerProperties> availableLayers;
-	if (enableDebug)
-		//We are adding requested layers.
-		layers.push_back("VK_LAYER_KHRONOS_validation");
+	std::vector<VkLayerProperties> availableLayers(layerCount);
+	//Get available layers to check if our requested layer is available.
+	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+	//We are adding requested layers.
+	m_layers.push_back("VK_LAYER_KHRONOS_validation");
 	//Not mandotory. Checks existence of validation layers. If fail program aborts.
-	GetValidationLayers(availableLayers, layers);
+	std::cout << "Checking for layers: " << m_layers.size() << std::endl;
+	for (const char* layerName : m_layers)
+	{
+		bool layerFound = false;
+		for (const auto& layerProperties : availableLayers)
+		{
+			if (strcmp(layerName, layerProperties.layerName) == 0)
+			{
+				layerFound = true;
+				break;
+			}
+		}
+		if (!layerFound)
+			return false;
+		std::cout << "\tFind layer: " << layerName << std::endl;
+	}
+	return true;
 }
 
 VkDebugUtilsMessengerCreateInfoEXT VulkanInstance::InitDebugMessenger(
@@ -91,24 +119,77 @@ VkDebugUtilsMessengerCreateInfoEXT VulkanInstance::InitDebugMessenger(
 	};
 }
 
-void VulkanInstance::CreateDebugMessanger()
+VkDeviceQueueCreateInfo VulkanInstance::InitDeviceQueueCreateInfo(QueueFamilyIndices queueFamilyIndices)
+{
+	float queuePriority = 1.0f;
+	return VkDeviceQueueCreateInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = {},
+		.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value(),
+		.queueCount = 1,
+		.pQueuePriorities = &queuePriority,
+	};
+}
+
+bool VulkanInstance::CreateDebugMessenger()
 {
 	//This part creates debug messenger for callbacks and validation layers.
 	//We will load this function manually because it is part of an extension.
-	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vkInst, "vkCreateDebugUtilsMessengerEXT");
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_vkInst, "vkCreateDebugUtilsMessengerEXT");
 	if (func == nullptr)
-		throw std::runtime_error("Failed to load extension function: vkCreateDebugUtilsMessengerEXT");
+		return false;
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = InitDebugMessenger();
-	func(vkInst, &debugCreateInfo, nullptr, &debugMessenger);
+	func(m_vkInst, &debugCreateInfo, nullptr, &m_debugMessenger);
+	return true;
 }
 
-void VulkanInstance::SelectPhysicalDevice()
+bool VulkanInstance::SelectPhysicalDevice()
 {
+	m_physicalDevice = nullptr;
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(vkInst, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(m_vkInst, &deviceCount, nullptr);
+	if (deviceCount == 0)
+		throw std::runtime_error("Can't find any Physical Device supports Vulkan.");
 	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(vkInst, &deviceCount, devices.data());
-	physicalDevice = devices[0];
+	vkEnumeratePhysicalDevices(m_vkInst, &deviceCount, devices.data());
+	for (auto &device : devices)
+	{
+		if (IsDeviceSuitable(device))
+		{
+			m_physicalDevice = device;
+			break;
+		}
+	}
+	if (m_physicalDevice == nullptr)
+		return false;
+	return true;
+}
+
+bool VulkanInstance::IsDeviceSuitable(VkPhysicalDevice &device)
+{
+	QueueFamilyIndices indices = FindQueueFamilies(device);
+	if (indices.IsComplete())
+		return true;
+	return false;
+}
+
+VulkanInstance::QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice &device)
+{
+	QueueFamilyIndices indices;
+	uint32_t familyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &familyCount, nullptr);
+	std::vector<VkQueueFamilyProperties> families(familyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &familyCount, families.data());
+	for (uint32_t i = 0; i < families.size(); i++)
+	{
+		if (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			indices.graphicsFamily = i;
+		if (indices.IsComplete())
+			break;
+	}
+	return indices;
 }
 
 VkInstanceCreateInfo VulkanInstance::InitCreateInfo(const VkApplicationInfo &appInfo)
@@ -119,10 +200,10 @@ VkInstanceCreateInfo VulkanInstance::InitCreateInfo(const VkApplicationInfo &app
 		.pNext = nullptr,
 		.flags = {},
 		.pApplicationInfo = &appInfo,
-		.enabledLayerCount = static_cast<uint32_t>(layers.size()),
-		.ppEnabledLayerNames = layers.data(),
-		.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
-		.ppEnabledExtensionNames = extensions.data()
+		.enabledLayerCount = static_cast<uint32_t>(m_layers.size()),
+		.ppEnabledLayerNames = m_layers.data(),
+		.enabledExtensionCount = static_cast<uint32_t>(m_extensions.size()),
+		.ppEnabledExtensionNames = m_extensions.data()
 	};
 }
 
@@ -153,35 +234,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugCallback(
 	return VK_FALSE;
 }
 
-void VulkanInstance::GetValidationLayers(
-	std::vector<VkLayerProperties> &availableLayers,
-	std::vector<const char *> &layerRequests)
+bool VulkanInstance::QueueFamilyIndices::IsComplete()
 {
-	uint32_t layerCount;
-	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-	availableLayers.resize(layerCount);
-	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-	std::cout << "Available Vulkan layers:" << layerCount << std::endl;
-	for (const auto &layerProperties : availableLayers)
-		std::cout << layerProperties.layerName << ": " << layerProperties.description << std::endl;
-
-	for (const char *requestedLayer : layerRequests)
-	{
-		bool layerExist = false;
-		for (const auto &layerProperties : availableLayers)
-		{
-			if (std::string(requestedLayer) == std::string(layerProperties.layerName))
-				layerExist = true;
-		}
-		if (layerExist == false)
-		{
-			std::cerr << "validation layer " << requestedLayer
-					  << " requested, but not available!" << std::endl;
-			throw std::runtime_error("");
-		}
-	}
-	std::cout << "Requested Validation layers Available!" << std::endl;
+	if (graphicsFamily.has_value())
+		return true;
+	return false;
 }
-
