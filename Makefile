@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+         #
+#    By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/18 00:36:23 by bgrhnzcn          #+#    #+#              #
-#    Updated: 2024/10/25 17:20:12 by bgrhnzcn         ###   ########.fr        #
+#    Updated: 2024/10/29 21:21:54 by buozcan          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,6 +42,27 @@ all: $(NAME)
 
 ################################################################################
 #                                                                              #
+#                                   VULKAN                                     #
+#                                                                              #
+################################################################################
+
+VULKAN_LAYERS_DIR = $(LIB_DIR)/Vulkan-ValidationLayers
+
+VULKAN_LAYERS = $(LIB_DIR)/Vulkan-ValidationLayers/build/layers/libVkLayer_khronos_validation.so
+
+$(VULKAN_LAYERS_DIR):
+	git clone https://github.com/KhronosGroup/Vulkan-ValidationLayers.git $(VULKAN_LAYERS_DIR)
+
+.ONESHELL: $(VULKAN_LAYERS)
+$(VULKAN_LAYERS): $(VULKAN_LAYERS_DIR)
+	cd $(VULKAN_LAYERS_DIR)
+	cmake -S . -B build -D UPDATE_DEPS=ON -D BUILD_WERROR=ON -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Debug
+	cmake --build build --config Debug
+
+VULKAN_KHRONOS_VAL_LAYER_LINK = -L $(VULKAN_LAYERS_DIR)/build/layers -lVkLayer_khronos_validation
+
+################################################################################
+#                                                                              #
 #                                    GLFW3                                     #
 #                                                                              #
 ################################################################################
@@ -60,8 +81,8 @@ $(GLFW): $(GLFW_DIR)
 $(GLFW_DIR):
 	git clone https://github.com/glfw/glfw.git $(GLFW_DIR)
 
-$(NAME): $(GLFW) $(OBJS) $(INC)
-	$(COMPILER) $(FLAGS) $(OBJS) $(GLFW_LINK) -o $@
+$(NAME): $(GLFW) $(VULKAN_LAYERS) $(OBJS) $(INC)
+	$(COMPILER) $(FLAGS) $(OBJS) $(GLFW_LINK) $(VULKAN_KHRONOS_VAL_LAYER_LINK) -o $@
 
 clean:
 	rm -rf $(OBJ_DIR)
@@ -71,7 +92,9 @@ fclean: clean
 
 re: fclean all
 
+.ONESHELL: run
 run: all
+	export VK_LAYER_PATH="/home/buozcan/scop/libs/Vulkan-ValidationLayers/build/layers"
 	./scop
 
 .PHONY: all clean fclean re run
