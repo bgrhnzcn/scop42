@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: buozcan <buozcan@student.42.fr>            +#+  +:+       +#+         #
+#    By: bgrhnzcn <bgrhnzcn@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/18 00:36:23 by bgrhnzcn          #+#    #+#              #
-#    Updated: 2024/10/29 21:21:54 by buozcan          ###   ########.fr        #
+#    Updated: 2024/11/04 20:36:33 by bgrhnzcn         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,6 +50,8 @@ VULKAN_LAYERS_DIR = $(LIB_DIR)/Vulkan-ValidationLayers
 
 VULKAN_LAYERS = $(LIB_DIR)/Vulkan-ValidationLayers/build/layers/libVkLayer_khronos_validation.so
 
+VULKAN_LAYER_EXIST = $(shell vulkaninfo | grep VK_LAYER_KHRONOS_validation | wc -l)
+
 $(VULKAN_LAYERS_DIR):
 	git clone https://github.com/KhronosGroup/Vulkan-ValidationLayers.git $(VULKAN_LAYERS_DIR)
 
@@ -81,8 +83,13 @@ $(GLFW): $(GLFW_DIR)
 $(GLFW_DIR):
 	git clone https://github.com/glfw/glfw.git $(GLFW_DIR)
 
+ifeq ($(VULKAN_LAYER_EXIST), 1)
+$(NAME): $(GLFW) $(OBJS) $(INC)
+	$(COMPILER) $(FLAGS) $(OBJS) $(GLFW_LINK) -o $@
+else
 $(NAME): $(GLFW) $(VULKAN_LAYERS) $(OBJS) $(INC)
 	$(COMPILER) $(FLAGS) $(OBJS) $(GLFW_LINK) $(VULKAN_KHRONOS_VAL_LAYER_LINK) -o $@
+endif
 
 clean:
 	rm -rf $(OBJ_DIR)
@@ -94,7 +101,9 @@ re: fclean all
 
 .ONESHELL: run
 run: all
-	export VK_LAYER_PATH="/home/buozcan/scop/libs/Vulkan-ValidationLayers/build/layers"
+ifneq ($(VULKAN_LAYER_EXIST), 1)
+	export VK_LAYER_PATH="$(PWD)/libs/Vulkan-ValidationLayers/build/layers"
+endif
 	./scop
 
 .PHONY: all clean fclean re run
